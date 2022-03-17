@@ -16,11 +16,11 @@ e=$(($a+$b))
 Какие значения переменным c,d,e будут присвоены? Почему?
 
 
-| Переменная | Значение | Обоснование |
-| ---------------------- | ------------------ | ------------------------ |
-| `c`                  | ???              | ???                    |
-| `d`                  | ???              | ???                    |
-| `e`                  | ???              | ???                    |
+| Переменная | Значение | Обоснование                                                                                                                                |
+| ---------------------- | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `c`                  | a+b              | так как отсутствует знак подстановки переменных $, то значения из a и b  Bash не берет. |
+| `d`                  | 1+2              | знак $ говорит Bash о том, что нужно взять значения переменных                                          |
+| `e`                  | 3                | здесь знак $ перед скобками говорит о том, что нужно произвести действия над            |
 
 ## Обязательная задача 2
 
@@ -46,6 +46,7 @@ do
 	if (($? != 0))
 	then
 		date >> curl.log
+		else exit
 	fi
 done
 ```
@@ -57,51 +58,22 @@ done
 ### Ваш скрипт:
 
 ```bash
-        FILE=log.txt
-        TARGET=192.168.0.1:80 173.194.222.113:80 87.250.250.242:80
-
-          touch $FILE
-          while true;
-          for run in {1..5}
-          do
-            DATE=$(date '+%d/%m/%Y %H:%M:%S')
-            ping -c 1 $TARGET &> /dev/null
-            if [[ $? -ne 0 ]]; then
-              echo "ERROR "$DATE
-              echo $DATE >> $FILE
-            else
-              echo "OK "$DATE
-            fi
-          done
+FILE=log.txt
+IP=("192.168.0.1:80 173.194.222.113:80 87.250.250.242:80")
+for g in ${IP[@]}; do
+    result=$(ping -c 5 -W 1 -q $g | grep -icE 'unknown|expired|unreachable|time out|100% packet loss')
+        if [[ $result = 0 ]]; then
+            while [[ $result = 0 ]]
+            do
+                result=$(ping -c 5 -W 1 -q $g | grep -icE 'unknown|expired|unreachable|time out|100% packet loss')
+                echo $result >> $FILE
+            done
+        else
+             echo "$g is down"
+        fi
+done
 ```
 
-```bash
-# Проверяем наличие файла со статусом
-if [[ -f '/var/log/routerstatus.log' ]]; then
-    echo "Файл со статусом есть"
-else
-# Если нет, то создаем. По умолчанию считаем, что связь уже есть
-    echo "connected" > /var/log/routerstatus.log
-fi
-
-# Объявляем переменные
-status="$(cat /var/log/routerstatus.log)"
-logfile=/var/log/pingrouter.log
-# указывает IP хоста, количество пингов - 5 раз, и смотрим количество ошибок соединения
-result=$(ping -c 5 192.168.0.1:80 173.194.222.113:80 87.250.250.242:80 2<&1| grep -icE 'unknown|expired|unreachable|time out|100% packet loss')
-# Если пинга нет, а до этого был, то меняем статус и пишем, что связь пропала
-if [[ "$result" != 0 && "$status" = connected ]]; then
-date "+%Y.%m.%d %H:%M:%S Связь пропала" | tee -a "${logfile}"
-echo 'disconnected' > /var/log/routerstatus.log
-# Если пинг есть, а до этого не было, меняем статус и пишем, что связь появилась
-elif [[ "$result" = 0 && "$status" = disconnected ]]; then
-date "+%Y.%m.%d %H:%M:%S Связь появилась" | tee -a "${logfile}"
-echo 'connected' > /var/log/routerstatus.log
-# В других случаях ничего не делаем
-else
-exit 0
-fi
-```
 
 ## Обязательная задача 4
 
@@ -109,57 +81,25 @@ fi
 
 ### Ваш скрипт:
 
-взять из этого скрипта маску IP
-
 ```bash
-PATH=/bin:/bin/bash:/usr/bin:/sbin:/usr/sbin
-IP=("10.5.5.1") # тут либо ip, либо FQDN вашего домена
+FILE=error.txt
+IP=("192.168.0.1:80 173.194.222.113:80 87.250.250.242:80")
 for g in ${IP[@]}; do
-    result=$(ping -c 2 -W 1 -q $g | grep transmitted)
-    pattern="0 received";
-        if [[ $result =~ $pattern ]]; then
-            while [[ $result =~ $pattern ]]
-                do
-                result=$(ping -c 2 -W 1 -q $g | grep transmitted)
-                echo "$result"
+    result=$(ping -c 5 -W 1 -q $g | grep -icE 'unknown|expired|unreachable|time out|100% packet loss')
+        if [[ $result = 0 ]]; then
+            while [[ $result = 0 ]]
+            do
+                result=$(ping -c 5 -W 1 -q $g | grep -icE 'unknown|expired|unreachable|time out|100% packet loss')
+                echo $IP >> $FILE
             done
         else
-             echo "$g is up"
+             echo "$g is down"
+             else exit
         fi
 done
-```
-
-
-
-```bash
-TARGET=192.168.0.1:80 173.194.222.113:80 87.250.250.242:80
-
-# Проверяем наличие файла со статусом
-if [[ -f '/var/log/routerstatus.log' ]]; then
-    echo "Файл со статусом есть"
-else
-# Если нет, то создаем. По умолчанию считаем, что связь уже есть
-    echo "connected" > /var/log/routerstatus.log
-fi
-
-# Объявляем переменные
-status="$(cat /var/log/routerstatus.log)"
-logfile=/var/log/pingrouter.log
-# указывает IP хоста, количество пингов - 5 раз, и смотрим количество ошибок соединения
-result=$(ping -c 5 192.168.0.1:80 173.194.222.113:80 87.250.250.242:80 2<&1| grep -icE 'unknown|expired|unreachable|time out|100% packet loss')
-# Если пинга нет, а до этого был, то меняем статус и пишем, что связь пропала
-if [[ "$result" != 0 && "$status" = connected ]]; then
-date "+%Y.%m.%d %H:%M:%S Связь пропала" | tee -a "${logfile}"
-echo 'disconnected' > /var/log/routerstatus.log
-# Если пинг есть, а до этого не было, меняем статус и пишем, что связь появилась
-elif [[ "$result" = 0 && "$status" = disconnected ]]; then
-date "+%Y.%m.%d %H:%M:%S Связь появилась" | tee -a "${logfile}"
-echo 'connected' > /var/log/routerstatus.log
-# В других случаях ничего не делаем
-else
-exit 0
 fi
 ```
+
 
 ## Дополнительное задание (со звездочкой*) - необязательно к выполнению
 
