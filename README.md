@@ -45,7 +45,7 @@ do
 	curl https://localhost:4757
 	if (($? != 0))
 	then
-		date >> curl.log
+		date > curl.log
 		else exit
 	fi
 done
@@ -58,22 +58,22 @@ done
 ### Ваш скрипт:
 
 ```bash
-FILE=log.txt
-IP=("192.168.0.1:80 173.194.222.113:80 87.250.250.242:80")
-for g in ${IP[@]}; do
-    result=$(ping -c 5 -W 1 -q $g | grep -icE 'unknown|expired|unreachable|time out|100% packet loss')
-        if [[ $result = 0 ]]; then
-            while [[ $result = 0 ]]
-            do
-                result=$(ping -c 5 -W 1 -q $g | grep -icE 'unknown|expired|unreachable|time out|100% packet loss')
-                echo $result >> $FILE
-            done
-        else
-             echo "$g is down"
-        fi
-done
+        FILE=log.txt
+        IP=("192.168.0.1 173.194.222.113 87.250.250.242")
+	PORT=80
+        touch $FILE
+          while true;
+          for run in {1..5}
+          do
+            DATE=$(date '+%d/%m/%Y %H:%M:%S')
+            nc -w 2 ${IP[@]} $PORT &> /dev/null $run
+            if [[ $? -ne 0 ]]; then
+              echo "ERROR "$DATE >> $FILE
+            else
+              echo "OK "$DATE >> $FILE
+            fi
+          done
 ```
-
 
 ## Обязательная задача 4
 
@@ -82,24 +82,23 @@ done
 ### Ваш скрипт:
 
 ```bash
-FILE=error.txt
-IP=("192.168.0.1:80 173.194.222.113:80 87.250.250.242:80")
-for g in ${IP[@]}; do
-    result=$(ping -c 5 -W 1 -q $g | grep -icE 'unknown|expired|unreachable|time out|100% packet loss')
-        if [[ $result = 0 ]]; then
-            while [[ $result = 0 ]]
-            do
-                result=$(ping -c 5 -W 1 -q $g | grep -icE 'unknown|expired|unreachable|time out|100% packet loss')
-                echo $IP >> $FILE
-            done
-        else
-             echo "$g is down"
-             else exit
-        fi
-done
-fi
+        FILE=log.txt
+        IP=("192.168.0.1 173.194.222.113 87.250.250.242")
+        PORT=80
+        touch $FILE
+          while true;
+          for run in {1..5}
+          do
+            DATE=$(date '+%d/%m/%Y %H:%M:%S')
+            nc -w 2 ${IP[@]} $PORT &> /dev/null $run
+            if [[ $? -ne 0 ]]; then
+              echo "ERROR "$DATE >> $FILE
+                 break
+            else
+              echo "OK "$DATE >> $FILE
+            fi
+          done
 ```
-
 
 ## Дополнительное задание (со звездочкой*) - необязательно к выполнению
 
